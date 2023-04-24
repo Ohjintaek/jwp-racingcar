@@ -4,12 +4,10 @@ import org.springframework.stereotype.Service;
 import racingcar.dao.PlayResultDao;
 import racingcar.dao.PlayersResultDao;
 import racingcar.domain.RacingGame;
-import racingcar.dto.CarDto;
-import racingcar.dto.RacingGameDto;
+import racingcar.dto.PlayResultDto;
+import racingcar.dto.PlayerResultDto;
 import racingcar.dto.RacingGameInputDto;
 import racingcar.dto.RacingGameResultDto;
-import racingcar.entity.PlayResultEntity;
-import racingcar.entity.PlayerResultEntity;
 import racingcar.utils.InputUtil;
 import racingcar.view.OutputView;
 
@@ -32,11 +30,11 @@ public class RacingGameService {
                 racingGameInputDto.getCount());
         racingGame.start();
 
-        RacingGameDto racingGameDto = new RacingGameDto(racingGame);
-        int resultId = playResultDao.insertResult(PlayResultEntity.from(racingGameDto));
-        playersResultDao.insertResult(racingGameDto.getRacingCars()
+        PlayResultDto playResultDto = new PlayResultDto(racingGame);
+        int resultId = playResultDao.insertResult(playResultDto.toEntity());
+        playersResultDao.insertResult(playResultDto.getRacingCars()
                 .stream()
-                .map(carDto -> PlayerResultEntity.from(carDto, resultId))
+                .map(carDto -> carDto.toEntity(resultId))
                 .collect(Collectors.toList()));
 
         RacingGameResultDto racingGameResultDto = new RacingGameResultDto(racingGame);
@@ -54,7 +52,7 @@ public class RacingGameService {
     private RacingGameResultDto requestRacingGameResult(final int resultId, final String winners) {
         return new RacingGameResultDto(winners, playersResultDao.getResultByResultId(resultId)
                 .stream()
-                .map(playerResultEntity -> new CarDto(playerResultEntity.getName(), playerResultEntity.getPosition()))
+                .map(playerResultEntity -> new PlayerResultDto(playerResultEntity.getName(), playerResultEntity.getPosition()))
                 .collect(Collectors.toList()));
     }
 }

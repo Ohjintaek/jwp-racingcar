@@ -35,16 +35,16 @@ public class PlayResultDao {
         return playResultEntity;
     };
 
-    public int insertResult(final PlayResultEntity playResulEntity) {
+    public int insertResult(final PlayResultEntity playResultEntity) {
         return insertPlayResult.executeAndReturnKey(
-                EntityToMap.convert(dto -> {
+                EntityToMap.convert(entity -> {
                             Map<String, Object> params = new HashMap<>();
-                            params.put("winners", playResulEntity.getWinners());
-                            params.put("play_count", playResulEntity.getPlayCount());
+                            params.put("winners", entity.getWinners());
+                            params.put("play_count", entity.getPlayCount());
                             params.put("created_at", LocalDateTime.now());
                             return params;
                         }
-                        , playResulEntity)).intValue();
+                        , playResultEntity)).intValue();
     }
 
     public List<PlayResultEntity> getResult() {

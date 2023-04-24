@@ -5,9 +5,8 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.jdbc.JdbcTest;
 import org.springframework.jdbc.core.JdbcTemplate;
-import racingcar.dto.CarDto;
-import racingcar.dto.RacingGameDto;
-import racingcar.entity.PlayResultEntity;
+import racingcar.dto.PlayerResultDto;
+import racingcar.dto.PlayResultDto;
 
 import java.util.List;
 
@@ -27,11 +26,11 @@ public class PlayResultDaoTest {
 
     @Test
     void insertWithMapAndCount() {
-        final RacingGameDto racingGameDto = new RacingGameDto("포비", 10,
-                List.of(new CarDto("포비", 10),
-                        new CarDto("브라운", 5), new CarDto("구구", 8)));
+        final PlayResultDto playResultDto = new PlayResultDto("포비", 10,
+                List.of(new PlayerResultDto("포비", 10),
+                        new PlayerResultDto("브라운", 5), new PlayerResultDto("구구", 8)));
 
-        playResultDao.insertResult(PlayResultEntity.from(racingGameDto));
+        playResultDao.insertResult(playResultDto.toEntity());
 
         final String sql = "select count (*) from play_result";
         assertThat(jdbcTemplate.queryForObject(sql, Integer.class)).isEqualTo(1);
@@ -39,11 +38,11 @@ public class PlayResultDaoTest {
 
     @Test
     void insertWithMapAndFindWinner() {
-        final RacingGameDto racingGameDto = new RacingGameDto("토미", 10,
-                List.of(new CarDto("토미", 10),
-                        new CarDto("브라운", 5), new CarDto("구구", 8)));
+        final PlayResultDto playResultDto = new PlayResultDto("토미", 10,
+                List.of(new PlayerResultDto("토미", 10),
+                        new PlayerResultDto("브라운", 5), new PlayerResultDto("구구", 8)));
 
-        playResultDao.insertResult(PlayResultEntity.from(racingGameDto));
+        playResultDao.insertResult(playResultDto.toEntity());
 
         final String sql = "select winners from play_result";
         assertThat(jdbcTemplate.queryForObject(sql, String.class)).isEqualTo("토미");
