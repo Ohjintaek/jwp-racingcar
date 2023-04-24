@@ -1,65 +1,53 @@
 package racingcar.controller;
 
-import io.restassured.RestAssured;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.web.server.LocalServerPort;
-import org.springframework.http.HttpStatus;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
-import racingcar.dto.RacingGameInputDto;
+import org.springframework.test.web.servlet.MockMvc;
+import racingcar.dto.PlayerResultDto;
+import racingcar.dto.RacingGameResultDto;
+import racingcar.service.RacingGameService;
 
-import static org.hamcrest.Matchers.containsString;
-import static org.hamcrest.core.Is.is;
-import static org.hamcrest.core.IsNull.notNullValue;
+import java.util.List;
 
-@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+
+@WebMvcTest(RacingGameController.class)
 public class RacingGameControllerTest {
-    @LocalServerPort
-    int port;
 
-    @BeforeEach
-    void setup() {
-        RestAssured.port = port;
+    @Autowired
+    private MockMvc mockMvc;
+
+    @MockBean
+    private RacingGameService racingGameService;
+
+    @Test
+    void playGame() throws Exception {
+        when(racingGameService.play(any())).thenReturn(new RacingGameResultDto("포비", List.of(new PlayerResultDto("포비", 10), new PlayerResultDto("브라운", 4), new PlayerResultDto("구구", 6))));
+
+        this.mockMvc
+                .perform(post("/plays")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{}"))
+                .andExpect(status().isOk())
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$.winners").value("포비"))
+                .andExpect(jsonPath("$.racingCars").isArray());
     }
 
     @Test
-    void playGame() {
-        final RacingGameInputDto racingGameInputDto = new RacingGameInputDto("포비, 브라운, 구구", 10);
+    void exceptionHandler() throws Exception {
+        when(racingGameService.play(any())).thenThrow(new IllegalArgumentException("ERROR"));
 
-        RestAssured.given().log().all()
-                .contentType(MediaType.APPLICATION_JSON_VALUE)
-                .body(racingGameInputDto)
-                .when().post("/plays")
-                .then().log().all()
-                .statusCode(HttpStatus.OK.value())
-                .body("winners", notNullValue())
-                .body("racingCars.size()", is(3));
-    }
-
-    @Test
-    void exceptionHandler1() {
-        final RacingGameInputDto racingGameInputDto = new RacingGameInputDto("포비,  ,구구", 10);
-
-        RestAssured.given().log().all()
-                .contentType(MediaType.APPLICATION_JSON_VALUE)
-                .body(racingGameInputDto)
-                .when().post("/plays")
-                .then().log().all()
-                .statusCode(HttpStatus.BAD_REQUEST.value())
-                .body(containsString("[ERROR]"));
-    }
-
-    @Test
-    void exceptionHandler2() {
-        final RacingGameInputDto racingGameInputDto = new RacingGameInputDto("포비,브라운,구구", 101);
-
-        RestAssured.given().log().all()
-                .contentType(MediaType.APPLICATION_JSON_VALUE)
-                .body(racingGameInputDto)
-                .when().post("/plays")
-                .then().log().all()
-                .statusCode(HttpStatus.BAD_REQUEST.value())
-                .body(containsString("[ERROR]"));
+        this.mockMvc
+                .perform(post("/plays")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{ \"names\" : \"포비, , 구구\", \"count\": \"10\"}"))
+                .andExpect(status().isBadRequest());
     }
 }
